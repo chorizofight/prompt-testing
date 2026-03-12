@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Watchlist Creation — Prompt Configurator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #1B2A4A;
+    --blue: #2D5FA8;
+    --blue-light: #EBF3FF;
+    --blue-mid: #B5D4F4;
+    --text: #1A1A1A;
+    --text-muted: #555;
+    --text-hint: #888;
+    --border: #D8D8D8;
+    --border-strong: #BBBBC0;
+    --surface: #F7F8FA;
+    --surface-2: #EDEEF2;
+    --white: #FFFFFF;
+    --green: #1D9E75;
+    --green-light: #EAF3DE;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: var(--surface);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* ── HEADER ── */
+  .page-header {
+    background: var(--navy);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .page-header h1 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.2px;
+  }
+  .header-pill {
+    background: rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+    font-size: 11px;
+    font-weight: 500;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  /* ── LAYOUT ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    min-height: calc(100vh - 62px);
+  }
+
+  /* ── LEFT PANEL ── */
+  .left-panel {
+    background: var(--white);
+    border-right: 1px solid var(--border);
+    padding: 28px 24px;
+    overflow-y: auto;
+  }
+
+  .panel-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--text-hint);
+    margin-bottom: 20px;
+  }
+
+  .section {
+    margin-bottom: 28px;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--navy);
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--surface-2);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .section-label .badge {
+    font-size: 10px;
+    font-weight: 500;
+    padding: 2px 7px;
+    border-radius: 10px;
+  }
+  .badge-required { background: #FEE; color: #B91C1C; }
+  .badge-optional { background: var(--surface-2); color: var(--text-hint); }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 5px;
+  }
+
+  .field input,
+  .field textarea,
+  .field select {
+    width: 100%;
+    font-family: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 11px;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+
+  .field input:focus,
+  .field textarea:focus,
+  .field select:focus {
+    border-color: var(--blue);
+    box-shadow: 0 0 0 2px rgba(45,95,168,0.12);
+  }
+
+  .field .hint {
+    font-size: 11px;
+    color: var(--text-hint);
+    margin-top: 4px;
+  }
+
+  .field textarea { min-height: 72px; line-height: 1.5; }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+
+  .toggle-row label {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    user-select: none;
+  }
+
+  input[type="checkbox"] {
+    width: 15px;
+    height: 15px;
+    accent-color: var(--blue);
+    cursor: pointer;
+  }
+
+  .generate-btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--blue);
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    margin-top: 8px;
+  }
+  .generate-btn:hover { background: #1E4A90; }
+  .generate-btn:active { transform: scale(0.99); }
+
+  .reset-btn {
+    width: 100%;
+    padding: 9px;
+    background: transparent;
+    color: var(--text-hint);
+    font-family: inherit;
+    font-size: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    margin-top: 8px;
+    transition: background 0.15s;
+  }
+  .reset-btn:hover { background: var(--surface); color: var(--text-muted); }
+
+  /* ── RIGHT PANEL ── */
+  .right-panel {
+    background: var(--surface);
+    padding: 28px 28px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .output-block {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .output-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .output-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+  }
+
+  .copy-btn {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--blue);
+    background: var(--blue-light);
+    border: 1px solid var(--blue-mid);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .copy-btn:hover { background: #D8E9FA; }
+  .copy-btn.copied { color: var(--green); background: var(--green-light); border-color: #9FE1CB; }
+
+  .output-content {
+    padding: 16px;
+    font-family: "SF Mono", "Fira Code", "Courier New", monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--text);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 420px;
+    overflow-y: auto;
+  }
+
+  .output-content.full-prompt {
+    max-height: 600px;
+  }
+
+  .placeholder-msg {
+    color: var(--text-hint);
+    font-family: inherit;
+    font-size: 13px;
+    font-style: italic;
+    padding: 32px 16px;
+    text-align: center;
+  }
+
+  /* Section headers inside prompt output */
+  .prompt-section { color: var(--navy); font-weight: 700; }
+  .prompt-label { color: var(--blue); font-weight: 600; }
+  .prompt-value { color: #2E7D32; }
+  .prompt-rule { color: var(--text-muted); }
+
+  /* Tip */
+  .tip {
+    background: var(--amber-light);
+    border: 1px solid #FAC775;
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    font-size: 12px;
+    color: var(--amber);
+    line-height: 1.5;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 4px;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 14px;
+    text-align: center;
+  }
+
+  .summary-card .s-value {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--navy);
+  }
+
+  .summary-card .s-label {
+    font-size: 10px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-hint);
+    margin-top: 2px;
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 60px 20px;
+    color: var(--text-hint);
+    text-align: center;
+  }
+
+  .empty-state .arrow {
+    font-size: 28px;
+    opacity: 0.3;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .left-panel { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <div>
+    <h1>Watchlist Creation — Prompt Configurator</h1>
+  </div>
+  <span class="header-pill">Sourcing</span>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: FORM -->
+  <div class="left-panel">
+    <div class="panel-title">Configure your inputs</div>
+
+    <!-- REQUIRED -->
+    <div class="section">
+      <div class="section-label">
+        Investment thesis
+        <span class="badge badge-required">Required</span>
+      </div>
+
+      <div class="field">
+        <label>Investment theme / sector</label>
+        <input type="text" id="sector" placeholder="e.g. Engineering Services, Healthcare IT" />
+      </div>
+
+      <div class="field">
+        <label>Geographic focus</label>
+        <input type="text" id="geo" placeholder="e.g. North America and Europe" />
+      </div>
+
+      <div class="field">
+        <label>Exclusions</label>
+        <textarea id="exclusions" placeholder="Any sectors, geographies, deal types, or specific companies to filter out"></textarea>
+      </div>
+    </div>
+
+    <!-- SIZING -->
+    <div class="section">
+      <div class="section-label">
+        Company sizing
+        <span class="badge badge-optional">Optional</span>
+      </div>
+
+      <div class="field">
+        <label>Revenue range</label>
+        <input type="text" id="revenue" placeholder="e.g. $50M–$500M" />
+        <div class="hint">Leave blank to use middle-market proxies (300–2000 employees)</div>
+      </div>
+
+      <div class="field">
+        <label>Employee count threshold</label>
+        <input type="text" id="employees" placeholder="e.g. >300" />
+      </div>
+    </div>
+
+    <!-- TARGETING -->
+    <div class="section">
+      <div class="section-label">
+        Targeting refinement
+        <span class="badge badge-optional">Optional</span>
+      </div>
+
+      <div class="field">
+        <label>Sub-sectors or themes to weight</label>
+        <textarea id="subsectors" placeholder="e.g. hazardous waste treatment, industrial cleaning" style="min-height:56px;"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Example / reference companies</label>
+        <textarea id="examples" placeholder="e.g. Company A, Company B — Claude will find similar targets" style="min-height:56px;"></textarea>
+        <div class="hint">Claude analyses their characteristics as benchmarks</div>
+      </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="section">
+      <div class="section-label">
+        Pipeline management
+        <span class="badge badge-optional">Optional</span>
+      </div>
+
+      <div class="field">
+        <label>Existing pipeline / watchlist to exclude</label>
+        <textarea id="pipeline" placeholder="Paste company names one per line, or leave blank" style="min-height:56px;"></textarea>
+        <div class="hint">Prevents duplicates with your current tracking list</div>
+      </div>
+
+      <div class="field">
+        <label>Target company count</label>
+        <input type="text" id="count" placeholder="e.g. 50 (default: Claude suggests)" />
+      </div>
+    </div>
+
+    <!-- OUTPUT PREFS -->
+    <div class="section">
+      <div class="section-label">
+        Output preferences
+        <span class="badge badge-optional">Optional</span>
+      </div>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="toggle-ownership" checked>
+        <label for="toggle-ownership">Include ownership research (PE-backed, founder, ESOP)</label>
+      </div>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="toggle-ebitda" checked>
+        <label for="toggle-ebitda">Include EBITDA lookup list at end of output</label>
+      </div>
+
+      <div class="toggle-row">
+        <input type="checkbox" id="toggle-disclaimer" checked>
+        <label for="toggle-disclaimer">Include financial data disclaimer</label>
+      </div>
+    </div>
+
+    <button class="generate-btn" onclick="generate()">Generate prompt</button>
+    <button class="reset-btn" onclick="resetForm()">Reset all fields</button>
+  </div>
+
+  <!-- RIGHT: OUTPUT -->
+  <div class="right-panel" id="right-panel">
+    <div class="empty-state" id="empty-state">
+      <div class="arrow">←</div>
+      <p>Fill in your investment thesis on the left,<br>then click <strong>Generate prompt</strong>.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function val(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+function checked(id) {
+  const el = document.getElementById(id);
+  return el ? el.checked : false;
+}
+
+function generate() {
+  const sector = val('sector');
+  const geo = val('geo');
+  const exclusions = val('exclusions');
+  const revenue = val('revenue');
+  const employees = val('employees');
+  const subsectors = val('subsectors');
+  const examples = val('examples');
+  const pipeline = val('pipeline');
+  const count = val('count');
+  const ownershipOn = checked('toggle-ownership');
+  const ebitdaOn = checked('toggle-ebitda');
+  const disclaimerOn = checked('toggle-disclaimer');
+
+  if (!sector && !geo) {
+    alert('Add at least a sector or geographic focus to generate a useful prompt.');
+    return;
+  }
+
+  // ── BUILD INPUTS SUMMARY ──
+  const inputLines = [];
+  if (sector) inputLines.push(['Investment theme / sector', sector]);
+  if (revenue) inputLines.push(['Revenue range', revenue]);
+  if (employees) inputLines.push(['Employee count', employees]);
+  if (geo) inputLines.push(['Geographic focus', geo]);
+  if (subsectors) inputLines.push(['Sub-sectors', subsectors]);
+  if (examples) inputLines.push(['Example companies', examples]);
+  const excludeList = [];
+  if (exclusions) excludeList.push(exclusions);
+  if (pipeline) excludeList.push(pipeline);
+  if (excludeList.length) inputLines.push(['Exclude', excludeList.join('; ')]);
+  if (count) inputLines.push(['Target count', count]);
+
+  const inputSummaryLines = inputLines.map(([k, v]) => `  ${k}: ${v}`).join('\n');
+
+  // ── COUNT FILLED FIELDS ──
+  const filled = [sector, geo, exclusions, revenue, employees, subsectors, examples, pipeline, count].filter(Boolean).length;
+  const optional = [revenue, employees, subsectors, examples, pipeline, count].filter(Boolean).length;
+
+  // ── BUILD FULL PROMPT ──
+  let prompt = `Context\nYou are an expert Private Equity Origination Analyst building a target database. Your goal is to create a comprehensive "Long List" of potential acquisition targets in a specified sector.\n\n`;
+
+  prompt += `Input Parameters\nNote: Any parameters left blank below are optional. Proceed immediately without asking clarifying questions.\n\n`;
+
+  prompt += `Investment Theme / Sector: ${sector || '[not specified — use your judgment]'}\n`;
+  prompt += `Revenue Range: ${revenue || '[not specified — use standard middle-market proxy]'}\n`;
+  prompt += `Employee Count: ${employees || '[not specified — default to >300 FTEs]'}\n`;
+  prompt += `Geographic Focus: ${geo || '[not specified — global middle-market]'}\n`;
+  prompt += `Sub-sectors: ${subsectors || '[not specified]'}\n`;
+  prompt += `Example Companies: ${examples || '[not specified]'}\n`;
+
+  const allExclusions = [exclusions, pipeline].filter(Boolean).join('\n');
+  prompt += `Existing Companies to Exclude:\n${allExclusions || '[none specified]'}\n`;
+
+  if (count) prompt += `Target Company Count: Aim for approximately ${count} companies.\n`;
+
+  prompt += `\nAnalysis Guidelines\n\n`;
+  prompt += `Search Strategy\n`;
+  if (examples) {
+    prompt += `- Analyse the Example Companies listed above — use their characteristics (size, service mix, geography, ownership profile) as benchmarks to identify similar targets.\n`;
+  }
+  if (count) {
+    prompt += `- Aim for approximately ${count} qualifying companies.\n`;
+  } else {
+    prompt += `- Create a comprehensive market map. Identify as many qualifying companies as possible — aim for 50+ if the sector allows.\n`;
+  }
+  prompt += `- Prioritise volume over brevity. Do not stop at an arbitrary number. Continue until you have exhausted the most relevant middle-market targets.\n`;
+  prompt += `- Do NOT ask the user clarifying questions. Execute immediately.\n`;
+
+  prompt += `\nHandling Private Data\n`;
+  prompt += `Exact Revenue and EBITDA are often not public.\n`;
+  prompt += `- Public companies: Pull EBITDA from SEC filings or financial databases. Ensure figures are annualised (not quarterly).\n`;
+  prompt += `- Private companies: Only include EBITDA if an actual estimate is reported in news, press releases, or databases. Do not calculate using margin proxies.\n`;
+  prompt += `- If no data is found, use N/A.\n`;
+  prompt += `- Do NOT exclude a company simply because exact financials are missing. Use employee count as a size proxy if financials are unavailable.\n`;
+
+  prompt += `\nExclusion Rules\n`;
+  prompt += `- Exclude companies with revenue clearly over $2 billion.\n`;
+  prompt += `- Exclude companies with fewer than 50 employees.\n`;
+  if (allExclusions) {
+    prompt += `- Exclude all companies listed in the exclusion list above.\n`;
+  }
+  if (exclusions && !pipeline) {
+    prompt += `- Additional sector/type exclusions: ${exclusions}\n`;
+  }
+
+  if (ownershipOn) {
+    prompt += `\nOwnership Research (required for every company)\n`;
+    prompt += `Identify the ownership structure for every company found:\n`;
+    prompt += `- PE-Backed: Sponsor name + year of acquisition — e.g. "Backed by KKR, acq. 2021"\n`;
+    prompt += `- Founder / Family: Write "Founder-owned" or "Family-owned"\n`;
+    prompt += `- Employee-Owned: Write "ESOP" or "Employee-owned"\n`;
+  }
+
+  prompt += `\nOutput Format\n`;
+  prompt += `Present the final result as a markdown table:\n\n`;
+  prompt += `| Company Name | Sub-Industry | Est. Revenue | Est. EBITDA | Est. Employees | ${ownershipOn ? 'Ownership Status | ' : ''}Notes |\n`;
+  prompt += `|---|---|---|---|---|${ownershipOn ? '---|' : ''}---|\n`;
+  prompt += `| Example Corp | Waste Treatment | ~$150M | ~$20M or N/A | 450 | ${ownershipOn ? 'PE-backed by KKR (2019) | ' : ''}Hazardous waste focus |\n\n`;
+  prompt += `Ensure every row follows this exact structure. Do not output as plain text or CSV.\n`;
+
+  if (ebitdaOn) {
+    prompt += `\nAt the end of your response, include a clean list of every company under the header "COMPANY LIST FOR EBITDA LOOKUP" — one company per line, no bullets, no numbers, no additional formatting. The list must match the exact table order.\n`;
+  }
+
+  if (disclaimerOn) {
+    prompt += `\nAfter the company list, include this disclaimer:\n"IMPORTANT: Revenue and EBITDA figures are estimates based on publicly available data and should be independently verified. This output is designed as a sourcing tool to identify potential targets, not as a substitute for financial due diligence."\n`;
+  }
+
+  // ── RENDER OUTPUT ──
+  const panel = document.getElementById('right-panel');
+  document.getElementById('empty-state')?.remove();
+
+  panel.innerHTML = `
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="s-value">${filled}</div>
+        <div class="s-label">Fields filled</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-value">${optional}</div>
+        <div class="s-label">Optional used</div>
+      </div>
+      <div class="summary-card">
+        <div class="s-value">${prompt.split('\n').length}</div>
+        <div class="s-label">Prompt lines</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>How to use:</strong> Copy the full prompt below and paste it into Claude. Your inputs are already baked in — no editing needed.
+    </div>
+
+    <div class="output-block">
+      <div class="output-header">
+        <div class="output-header-left">
+          <span class="output-title">Your inputs</span>
+        </div>
+        <button class="copy-btn" onclick="copyText('inputs-content', this)">
+          Copy
+        </button>
+      </div>
+      <div class="output-content" id="inputs-content">${escHtml(inputSummaryLines)}</div>
+    </div>
+
+    <div class="output-block">
+      <div class="output-header">
+        <div class="output-header-left">
+          <span class="output-title">Full prompt — ready to paste into Claude</span>
+        </div>
+        <button class="copy-btn" onclick="copyText('prompt-content', this)">
+          Copy
+        </button>
+      </div>
+      <div class="output-content full-prompt" id="prompt-content">${escHtml(prompt)}</div>
+    </div>
+  `;
+}
+
+function escHtml(str) {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function copyText(id, btn) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+function resetForm() {
+  ['sector','geo','exclusions','revenue','employees','subsectors','examples','pipeline','count'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['toggle-ownership','toggle-ebitda','toggle-disclaimer'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.checked = true;
+  });
+  const panel = document.getElementById('right-panel');
+  panel.innerHTML = `
+    <div class="empty-state" id="empty-state">
+      <div class="arrow">←</div>
+      <p>Fill in your investment thesis on the left,<br>then click <strong>Generate prompt</strong>.</p>
+    </div>`;
+}
+</script>
+</body>
+</html>
