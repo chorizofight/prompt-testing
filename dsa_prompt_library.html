@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DSA × Claude — PE Prompt Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0D1117;--ink-2:#2D3748;--ink-3:#718096;
+  --paper:#F8F6F1;--paper-2:#EDE9E1;--paper-3:#E0DDD5;
+  --gold:#B8860B;--gold-bright:#D4A017;--gold-dim:rgba(184,134,11,0.12);
+  --navy:#0A1628;--navy-2:#122040;--blue:#1A56DB;
+  --border:#D4CFC5;--r:4px;--r-lg:8px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;font-size:14px;line-height:1.6;}
+
+/* ── NAV ── */
+nav{background:var(--navy);height:56px;display:flex;align-items:center;padding:0 40px;justify-content:space-between;position:sticky;top:0;z-index:200;border-bottom:1px solid rgba(212,160,23,0.25);}
+.nav-logo{font-family:'Playfair Display',serif;font-size:15px;color:#fff;cursor:pointer;display:flex;align-items:center;gap:10px;background:none;border:none;}
+.nav-logo-mark{width:26px;height:26px;border:1.5px solid var(--gold-bright);border-radius:3px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold-bright);font-weight:500;flex-shrink:0;}
+.nav-links{display:flex;align-items:center;gap:6px;}
+.nav-link{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,0.45);padding:5px 12px;border-radius:3px;cursor:pointer;text-transform:uppercase;letter-spacing:0.8px;background:none;border:1px solid transparent;transition:all 0.15s;}
+.nav-link:hover{color:rgba(255,255,255,0.8);}
+.nav-link.active{color:var(--gold-bright);border-color:rgba(212,160,23,0.3);background:rgba(212,160,23,0.08);}
+.nav-badge{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold-bright);background:rgba(212,160,23,0.1);border:1px solid rgba(212,160,23,0.25);padding:3px 9px;border-radius:20px;letter-spacing:0.5px;}
+
+/* ── PAGES ── */
+.page{display:none;}.page.active{display:block;}
+
+/* ── HERO ── */
+.hero{background:var(--navy);padding:72px 40px 80px;position:relative;overflow:hidden;}
+.hero-bg-lines{position:absolute;inset:0;background-image:repeating-linear-gradient(90deg,rgba(212,160,23,0.04) 0,rgba(212,160,23,0.04) 1px,transparent 1px,transparent 80px);pointer-events:none;}
+.hero-bg-glow{position:absolute;width:600px;height:600px;top:-200px;right:-100px;background:radial-gradient(circle,rgba(26,86,219,0.08) 0%,transparent 70%);pointer-events:none;}
+.hero-inner{max-width:780px;position:relative;z-index:1;}
+.hero-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold-bright);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:10px;}
+.hero-eyebrow::after{content:'';display:block;width:40px;height:1px;background:var(--gold-bright);opacity:0.4;}
+h1{font-family:'Playfair Display',serif;font-size:52px;line-height:1.08;color:#fff;letter-spacing:-1px;margin-bottom:22px;}
+h1 .accent{color:var(--gold-bright);font-style:italic;}
+.hero-sub{font-size:16px;color:rgba(255,255,255,0.45);line-height:1.75;max-width:520px;margin-bottom:44px;}
+.hero-stats{display:flex;border:1px solid rgba(255,255,255,0.1);border-radius:var(--r-lg);overflow:hidden;width:fit-content;}
+.hero-stat{padding:18px 32px;border-right:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.03);}
+.hero-stat:last-child{border-right:none;}
+.stat-num{font-family:'Playfair Display',serif;font-size:30px;color:#fff;line-height:1;display:block;margin-bottom:4px;}
+.stat-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:1px;display:block;}
+
+/* ── STAGES GRID ── */
+.stages-section{padding:60px 40px;max-width:1100px;margin:0 auto;}
+.section-label{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;}
+.section-title{font-family:'Playfair Display',serif;font-size:28px;color:var(--ink);margin-bottom:32px;}
+.stages-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.stage-card{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);padding:24px;transition:all 0.18s;position:relative;overflow:hidden;display:block;}
+.stage-card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;background:var(--stage-color,var(--gold));transform:scaleX(0);transform-origin:left;transition:transform 0.2s ease;}
+.stage-card.live{cursor:pointer;}
+.stage-card.live:hover{border-color:var(--stage-color,var(--gold));box-shadow:0 8px 30px rgba(0,0,0,0.08);transform:translateY(-2px);}
+.stage-card.live:hover::after{transform:scaleX(1);}
+.stage-card.coming{cursor:default;}
+.stage-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.stage-icon{width:36px;height:36px;border-radius:8px;background:var(--stage-bg,var(--gold-dim));display:flex;align-items:center;justify-content:center;font-size:16px;}
+.stage-count-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);background:var(--paper-2);padding:3px 8px;border-radius:12px;}
+.stage-card-name{font-family:'Playfair Display',serif;font-size:17px;color:var(--ink);margin-bottom:6px;font-weight:600;}
+.stage-card-desc{font-size:12px;color:var(--ink-3);line-height:1.6;}
+.stage-card-cta{margin-top:16px;font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:1px;display:flex;align-items:center;gap:5px;}
+.stage-card.live .stage-card-cta{color:var(--stage-color,var(--gold));}
+.stage-card.live .stage-card-cta::after{content:'→';}
+.stage-card.coming .stage-card-cta{color:var(--ink-3);}
+
+.stage-sourcing{--stage-color:#2563EB;--stage-bg:rgba(37,99,235,0.08);}
+.stage-screening{--stage-color:#7C3AED;--stage-bg:rgba(124,58,237,0.08);}
+.stage-diligence{--stage-color:#D97706;--stage-bg:rgba(217,119,6,0.08);}
+.stage-portfolio{--stage-color:#059669;--stage-bg:rgba(5,150,105,0.08);}
+.stage-investor{--stage-color:#DB2777;--stage-bg:rgba(219,39,119,0.08);}
+.stage-transaction{--stage-color:#DC2626;--stage-bg:rgba(220,38,38,0.08);}
+.stage-ops{--stage-color:#4B5563;--stage-bg:rgba(75,85,99,0.08);}
+.stage-bd{--stage-color:#0D9488;--stage-bg:rgba(13,148,136,0.08);}
+.stage-across{--stage-color:#EA580C;--stage-bg:rgba(234,88,12,0.08);}
+
+/* ── COMING SOON BANNER ── */
+.coming-soon{margin:0 40px 60px;background:var(--navy-2);border:1px solid rgba(212,160,23,0.2);border-radius:var(--r-lg);padding:24px 32px;display:flex;align-items:center;gap:20px;max-width:1020px;}
+.cs-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--gold-bright);text-transform:uppercase;letter-spacing:1.5px;white-space:nowrap;}
+.cs-text{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.5;}
+.cs-text strong{color:rgba(255,255,255,0.8);}
+
+/* ── WATCHLIST PAGE LAYOUT ── */
+.wl-wrap{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 56px);}
+
+/* Sidebar */
+.sidebar{background:#fff;border-right:1px solid var(--border);position:sticky;top:56px;height:calc(100vh - 56px);overflow-y:auto;}
+.sidebar-header{padding:24px 20px 16px;border-bottom:1px solid var(--border);}
+.sidebar-back{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);cursor:pointer;display:flex;align-items:center;gap:5px;margin-bottom:14px;background:none;border:none;padding:0;transition:color 0.15s;}
+.sidebar-back:hover{color:var(--ink);}
+.sidebar-stage-name{font-family:'Playfair Display',serif;font-size:18px;color:var(--ink);margin-bottom:3px;}
+.sidebar-stage-sub{font-size:12px;color:var(--ink-3);}
+.sidebar-nav{padding:10px 0;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:9px 20px;cursor:pointer;transition:background 0.12s;border-left:2px solid transparent;}
+.sb-item:hover:not(.disabled){background:var(--paper);}
+.sb-item.active{background:var(--paper-2);border-left-color:var(--gold);}
+.sb-item.disabled{opacity:0.38;cursor:default;}
+.sb-dot{width:6px;height:6px;border-radius:50%;background:var(--border);flex-shrink:0;}
+.sb-item.active .sb-dot{background:var(--gold);}
+.sb-text{font-size:12px;color:var(--ink-2);line-height:1.4;}
+.sb-item.active .sb-text{color:var(--ink);font-weight:500;}
+
+/* Main content */
+.wl-content{padding:40px 52px 80px;max-width:860px;}
+.breadcrumb{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);margin-bottom:28px;display:flex;align-items:center;gap:8px;}
+.bc-link{cursor:pointer;transition:color 0.12s;}.bc-link:hover{color:var(--ink);}
+.bc-sep{color:var(--border);}
+
+/* Page title area */
+.wl-title{font-family:'Playfair Display',serif;font-size:30px;color:var(--ink);line-height:1.2;margin-bottom:8px;}
+.wl-description{font-size:14px;color:var(--ink-2);line-height:1.75;margin-bottom:24px;max-width:640px;}
+.wl-tags{display:flex;gap:8px;margin-bottom:36px;flex-wrap:wrap;}
+.tag{font-family:'IBM Plex Mono',monospace;font-size:10px;padding:4px 10px;border-radius:3px;text-transform:uppercase;letter-spacing:0.5px;}
+.tag-stage{background:var(--paper-2);color:var(--ink-3);}
+.tag-prio{background:rgba(217,119,6,0.1);color:#92400E;}
+
+/* Section headers */
+.sec-head{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;}
+
+/* User input block */
+.input-block{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:28px;overflow:hidden;}
+.input-block-row{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.input-block-row:last-child{border-bottom:none;}
+.ib-label{width:200px;flex-shrink:0;padding:13px 16px;background:var(--paper-2);font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);border-right:1px solid var(--border);display:flex;align-items:flex-start;padding-top:15px;}
+.ib-value{padding:13px 16px;font-size:13px;color:var(--ink-2);line-height:1.65;flex:1;}
+.ib-value ul{list-style:none;display:flex;flex-direction:column;gap:4px;}
+.ib-value ul li{display:flex;align-items:baseline;gap:8px;}
+.ib-value ul li::before{content:'—';color:var(--border);font-size:10px;flex-shrink:0;}
+.ib-value .opt{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--ink-3);background:var(--paper-2);padding:1px 6px;border-radius:2px;margin-left:3px;vertical-align:middle;}
+
+/* Sources row */
+.source-pills{display:flex;gap:8px;flex-wrap:wrap;padding:13px 16px;}
+.source-pill{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue);background:rgba(26,86,219,0.06);border:1px solid rgba(26,86,219,0.15);padding:4px 12px;border-radius:20px;}
+
+/* Setup steps */
+.setup-steps{display:flex;flex-direction:column;gap:0;background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:28px;overflow:hidden;}
+.setup-step{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.setup-step:last-child{border-bottom:none;}
+.setup-num{width:44px;flex-shrink:0;background:var(--paper-2);display:flex;align-items:flex-start;justify-content:center;padding-top:15px;border-right:1px solid var(--border);}
+.setup-num-inner{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-3);background:var(--paper-3);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;}
+.setup-body{padding:13px 16px;flex:1;}
+.setup-title{font-size:13px;font-weight:600;color:var(--ink);margin-bottom:3px;}
+.setup-desc{font-size:12px;color:var(--ink-3);line-height:1.6;}
+
+/* Prompt box */
+.prompt-box{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:28px;overflow:hidden;}
+.prompt-box-header{padding:12px 18px;background:var(--paper-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.prompt-box-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;}
+.prompt-box-hint{font-size:11px;color:var(--ink-3);font-style:italic;}
+.prompt-text{padding:20px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.85;color:var(--ink-2);white-space:pre-wrap;word-break:break-word;max-height:440px;overflow-y:auto;background:#fff;}
+.prompt-footer{padding:12px 18px;background:var(--paper-2);border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;}
+.btn{font-family:'IBM Plex Sans',sans-serif;font-size:12px;font-weight:500;padding:7px 16px;border-radius:var(--r);cursor:pointer;transition:all 0.15s;border:1px solid transparent;}
+.btn-ghost{background:none;border-color:var(--border);color:var(--ink-2);}
+.btn-ghost:hover{border-color:var(--ink-2);}
+.btn-primary{background:var(--navy);color:#fff;border-color:var(--navy);}
+.btn-primary:hover{background:var(--blue);}
+.btn-primary.copied{background:#065F46;border-color:#065F46;}
+
+/* Divider */
+.divider{border:none;border-top:1px solid var(--border);margin:36px 0;}
+
+/* ── CONFIGURATOR ── */
+.cfg-wrap{background:#fff;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;}
+.cfg-header{background:var(--navy);padding:18px 22px;display:flex;align-items:center;gap:12px;}
+.cfg-header-title{font-family:'Playfair Display',serif;font-size:17px;color:#fff;}
+.cfg-header-sub{font-size:12px;color:rgba(255,255,255,0.38);margin-left:auto;}
+.cfg-body{padding:24px;}
+.cfg-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.cfg-field{display:flex;flex-direction:column;gap:5px;}
+.cfg-field.full{grid-column:1/-1;}
+.cfg-label{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;}
+.req{color:#DC2626;}
+.cfg-input,.cfg-textarea{font-family:'IBM Plex Sans',sans-serif;font-size:13px;color:var(--ink);background:var(--paper);border:1px solid var(--border);border-radius:var(--r);padding:8px 11px;outline:none;transition:border-color 0.15s;width:100%;resize:vertical;}
+.cfg-input:focus,.cfg-textarea:focus{border-color:var(--navy);}
+.cfg-textarea{min-height:76px;}
+.cfg-hint{font-size:11px;color:var(--ink-3);font-style:italic;}
+.cfg-sep{grid-column:1/-1;border:none;border-top:1px solid var(--border);margin:6px 0;}
+.cfg-generate-row{display:flex;justify-content:flex-end;margin-top:18px;}
+.btn-generate{font-family:'IBM Plex Sans',sans-serif;font-size:13px;font-weight:600;padding:9px 26px;background:var(--gold);color:var(--navy);border:none;border-radius:var(--r);cursor:pointer;transition:all 0.15s;}
+.btn-generate:hover{background:var(--gold-bright);}
+
+.output-area{margin-top:18px;border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;display:none;}
+.output-area.visible{display:block;}
+.output-head{padding:11px 16px;background:var(--paper-2);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.output-lbl{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--ink-3);text-transform:uppercase;letter-spacing:1px;}
+.output-text{padding:16px;font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.85;color:var(--ink-2);white-space:pre-wrap;word-break:break-word;background:#fff;max-height:360px;overflow-y:auto;}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px){.stages-grid{grid-template-columns:1fr 1fr;}.wl-wrap{grid-template-columns:1fr;}.sidebar{position:static;height:auto;}}
+@media(max-width:640px){nav,.hero,.stages-section{padding-left:20px;padding-right:20px;}.coming-soon{margin-left:20px;margin-right:20px;}h1{font-size:32px;}.stages-grid{grid-template-columns:1fr;}.wl-content{padding:24px 20px 60px;}.cfg-grid{grid-template-columns:1fr;}.hero-stats{flex-direction:column;}.hero-stat{border-right:none;border-bottom:1px solid rgba(255,255,255,0.08);}.input-block-row{flex-direction:column;}.ib-label{width:100%;border-right:none;border-bottom:1px solid var(--border);}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <button class="nav-logo" onclick="showPage('home')">
+    <div class="nav-logo-mark">PE</div>
+    DSA × Claude
+  </button>
+  <div class="nav-links">
+    <button class="nav-link active" id="nav-home" onclick="showPage('home')">Library</button>
+    <button class="nav-link" id="nav-watchlist" onclick="showPage('watchlist')">Watchlist</button>
+    <span class="nav-badge">BETA</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     HOME PAGE
+══════════════════════════════════════ -->
+<div class="page active" id="page-home">
+
+  <div class="hero">
+    <div class="hero-bg-lines"></div>
+    <div class="hero-bg-glow"></div>
+    <div class="hero-inner">
+      <div class="hero-eyebrow">Private Equity Workflow Intelligence</div>
+      <h1>Claude prompts for<br>every stage of the<br><span class="accent">deal cycle.</span></h1>
+      <p class="hero-sub">Structured, tested skills built for PE professionals. Each prompt is ready to deploy inside Claude Projects — from sourcing through portfolio monitoring.</p>
+      <div class="hero-stats">
+        <div class="hero-stat"><span class="stat-num">40+</span><span class="stat-lbl">Confirmed Prompts</span></div>
+        <div class="hero-stat"><span class="stat-num">9</span><span class="stat-lbl">Deal Stages</span></div>
+        <div class="hero-stat"><span class="stat-num">∞</span><span class="stat-lbl">Customisable</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stages-section">
+    <div class="section-label">Deal Cycle Coverage</div>
+    <div class="section-title">Browse by stage</div>
+    <div class="stages-grid">
+
+      <div class="stage-card stage-sourcing live" onclick="showPage('watchlist')">
+        <div class="stage-card-top">
+          <div class="stage-icon">🎯</div>
+          <span class="stage-count-badge">5 prompts</span>
+        </div>
+        <div class="stage-card-name">Sourcing</div>
+        <div class="stage-card-desc">Target identification, watchlist creation, outbound outreach, CRM enrichment and conference prep.</div>
+        <div class="stage-card-cta">Explore stage</div>
+      </div>
+
+      <div class="stage-card stage-screening coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">🔍</div>
+          <span class="stage-count-badge">10 prompts</span>
+        </div>
+        <div class="stage-card-name">Screening</div>
+        <div class="stage-card-desc">CIM analysis, early opportunity overviews, IC memo drafting and management background research.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+      <div class="stage-card stage-diligence coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">📋</div>
+          <span class="stage-count-badge">8 prompts</span>
+        </div>
+        <div class="stage-card-name">Diligence</div>
+        <div class="stage-card-desc">DD question lists, Porter's Five Forces, competitive analysis, expert call summaries and memo cross-referencing.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+      <div class="stage-card stage-portfolio coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">📊</div>
+          <span class="stage-count-badge">6 prompts</span>
+        </div>
+        <div class="stage-card-name">Portfolio Monitoring</div>
+        <div class="stage-card-desc">Board meeting prep, PortCo news runs, earnings call analysis and monthly variance reporting.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+      <div class="stage-card stage-investor coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">💼</div>
+          <span class="stage-count-badge">3 prompts</span>
+        </div>
+        <div class="stage-card-name">Investor / LP</div>
+        <div class="stage-card-desc">Quarterly reporting commentary, monthly LP reporting and talk track generation for investor updates.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+      <div class="stage-card stage-transaction coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">📄</div>
+          <span class="stage-count-badge">5 prompts</span>
+        </div>
+        <div class="stage-card-name">Transaction</div>
+        <div class="stage-card-desc">NDA review and creation, SPA summarisation, key provisions extraction and term sheet evaluation.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+      <div class="stage-card stage-ops coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">⚙️</div>
+          <span class="stage-count-badge">2 prompts</span>
+        </div>
+        <div class="stage-card-name">Ops</div>
+        <div class="stage-card-desc">Resume screening and personalised candidate outreach for fund team and portfolio company hiring.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+      <div class="stage-card stage-bd coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">🤝</div>
+          <span class="stage-count-badge">1 prompt</span>
+        </div>
+        <div class="stage-card-name">Business Development</div>
+        <div class="stage-card-desc">RfP generation for fund-level business development and institutional client engagement.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+      <div class="stage-card stage-across coming">
+        <div class="stage-card-top">
+          <div class="stage-icon">🔄</div>
+          <span class="stage-count-badge">3 prompts</span>
+        </div>
+        <div class="stage-card-name">Across Deal Cycle</div>
+        <div class="stage-card-desc">Work output review, meeting notes creation and daily project email digests applicable at any stage.</div>
+        <div class="stage-card-cta">Coming soon</div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="coming-soon">
+    <span class="cs-label">In progress</span>
+    <p class="cs-text">More prompts are being tested and documented. <strong>Watchlist Creation</strong> is live now — remaining stages will be added as QA is completed.</p>
+  </div>
+
+</div>
+
+
+<!-- ══════════════════════════════════════
+     WATCHLIST PAGE
+══════════════════════════════════════ -->
+<div class="page" id="page-watchlist">
+  <div class="wl-wrap">
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <button class="sidebar-back" onclick="showPage('home')">← Back to Library</button>
+        <div class="sidebar-stage-name">Sourcing</div>
+        <div class="sidebar-stage-sub">5 prompts in this stage</div>
+      </div>
+      <div class="sidebar-nav">
+        <div class="sb-item active">
+          <div class="sb-dot"></div>
+          <span class="sb-text">Watchlist creation</span>
+        </div>
+        <div class="sb-item disabled"><div class="sb-dot"></div><span class="sb-text">Watchlist monitoring</span></div>
+        <div class="sb-item disabled"><div class="sb-dot"></div><span class="sb-text">CRM optimisation</span></div>
+        <div class="sb-item disabled"><div class="sb-dot"></div><span class="sb-text">Conference prep</span></div>
+        <div class="sb-item disabled"><div class="sb-dot"></div><span class="sb-text">Outbound email generator</span></div>
+      </div>
+    </div>
+
+    <!-- Main content -->
+    <div class="wl-content">
+
+      <div class="breadcrumb">
+        <span class="bc-link" onclick="showPage('home')">Library</span>
+        <span class="bc-sep">/</span>
+        <span>Sourcing</span>
+        <span class="bc-sep">/</span>
+        <span>Watchlist Creation</span>
+      </div>
+
+      <!-- Title + description -->
+      <div class="wl-title">Watchlist Creation</div>
+      <p class="wl-description">Generate a structured, prioritised watchlist of acquisition targets aligned to the firm's investment thesis — ready to review, refine, and load into your CRM.</p>
+      <div class="wl-tags">
+        <span class="tag tag-stage">Sourcing</span>
+        <span class="tag tag-prio">Priority</span>
+      </div>
+
+      <!-- User Input -->
+      <div class="sec-head">User Input</div>
+      <div class="input-block">
+        <div class="input-block-row">
+          <div class="ib-label">Investment thesis</div>
+          <div class="ib-value">Sector focus, geography, revenue range, deal type</div>
+        </div>
+        <div class="input-block-row">
+          <div class="ib-label">Exclusions</div>
+          <div class="ib-value">Any sectors, geographies, or deal types to filter out</div>
+        </div>
+        <div class="input-block-row">
+          <div class="ib-label">Optional</div>
+          <div class="ib-value">
+            <ul>
+              <li>Existing pipeline or watchlist to avoid duplicates</li>
+              <li>Named sub-sectors or emerging themes to weight</li>
+              <li>Target company count <span style="color:var(--ink-3);font-size:12px;">(default: Claude suggests an appropriate number)</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sources / Tooling -->
+      <div class="sec-head">Sources / Tooling</div>
+      <div class="input-block" style="margin-bottom:28px;">
+        <div class="input-block-row" style="border-bottom:none;">
+          <div class="source-pills">
+            <span class="source-pill">Web</span>
+            <span class="source-pill">CRM</span>
+            <span class="source-pill">File storage</span>
+            <span class="source-pill">File upload</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Setup in Claude -->
+      <div class="sec-head">Setup in Claude</div>
+      <div class="setup-steps">
+        <div class="setup-step">
+          <div class="setup-num"><div class="setup-num-inner">1</div></div>
+          <div class="setup-body">
+            <div class="setup-title">Create a Skill</div>
+            <div class="setup-desc">Save the workflow and connectors to be used as a reusable Skill inside Claude.</div>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="setup-num"><div class="setup-num-inner">2</div></div>
+          <div class="setup-body">
+            <div class="setup-title">Save your investment thesis</div>
+            <div class="setup-desc">Add your thesis to the prompt as an Asset or paste it directly as text.</div>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="setup-num"><div class="setup-num-inner">3</div></div>
+          <div class="setup-body">
+            <div class="setup-title">Set up a Project</div>
+            <div class="setup-desc">Store your investment thesis once and Claude applies it automatically every session — no need to re-paste.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prompt -->
+      <div class="sec-head">Prompt</div>
+      <div class="prompt-box">
+        <div class="prompt-box-header">
+          <span class="prompt-box-label">Copy and paste into Claude to begin</span>
+          <span class="prompt-box-hint">Add your inputs in the same message or as a follow-up</span>
+        </div>
+        <div class="prompt-text" id="prompt-text">Context
+You are an expert Private Equity Origination Analyst building a target database. Your goal is to create a comprehensive "Long List" of potential acquisition targets in a specified sector.
+
+Input Parameters
+The parameters below are OPTIONAL. If the user leaves specific numbers blank, do NOT stop to ask questions. Instead, proceed immediately using the "Sector" as your primary guide and apply standard middle-market size proxies (300–2000 employees).
+
+Investment Theme / Sector:
+Insert sector — e.g. Engineering Services
+
+Revenue Range:
+Optional — e.g. $100M–$1,000M
+
+Employee Count:
+Optional — e.g. &gt;300
+
+Geographic Focus:
+Optional — e.g. North America and Europe
+
+Sub-sectors:
+Optional — sub-sector keywords
+
+Example Companies:
+Optional — reference companies to guide targeting, e.g. Company A, Company B
+
+Existing Companies to Exclude:
+Paste company names, or upload exclusion list
+
+
+Analysis Guidelines
+
+Search Strategy
+If Example Companies are provided, analyse their characteristics (size, service mix, geography, ownership profile) and use these as benchmarks to identify similar targets. Prioritise companies that share key attributes.
+
+Goal: Create a comprehensive market map. Identify as many qualifying companies as possible — aim for 50+ if the sector allows.
+
+Prioritise volume over brevity. Do not stop at an arbitrary number like 10 or 20. Continue listing companies until you have exhausted the most relevant middle-market targets in the sector.
+
+Interaction rule: Do NOT ask the user clarifying questions. If inputs are blank, execute the search immediately.
+
+Handling Private Data
+Exact Revenue and EBITDA are often not public.
+- Public companies: Pull EBITDA from SEC filings or financial databases. Ensure figures are annualised (not quarterly).
+- Private companies: Only include EBITDA if an actual estimate is reported in news, press releases, or databases. Do not calculate using margin proxies.
+- If no data is found, use N/A.
+- Do NOT exclude a company simply because exact financials are missing. If financials are missing, assume a company with the specified employee count (or &gt;300 FTEs default) is large enough to qualify.
+
+Exclusion Rules
+- Exclude companies with revenue clearly over $2 billion.
+- Exclude companies with fewer than 50 employees.
+- Exclude any names listed in the "Existing Companies to Exclude" field.
+
+Ownership Research (required for every company)
+Identify the ownership structure for every company found:
+- PE-Backed: Sponsor name + year of acquisition — e.g. "Backed by KKR, acq. 2021"
+- Founder / Family: Write "Founder-owned" or "Family-owned"
+- Employee-Owned: Write "ESOP" or "Employee-owned"
+
+Output Format
+Present the final result as a markdown table with the following columns:
+Company Name | Sub-Industry | Est. Revenue | Est. EBITDA | Est. Employees | Ownership Status | Notes
+
+Ensure every row follows this exact structure. Do not output as plain text or CSV.
+
+At the end of your response, include a clean list of every company under the header "COMPANY LIST FOR EBITDA LOOKUP" — one company per line, no bullets, no numbers, no additional formatting. The list must match the exact order of the table.
+
+After the company list, include the following disclaimer:
+IMPORTANT: Revenue and EBITDA figures are estimates based on publicly available data and should be independently verified. This output is designed as a sourcing tool to identify potential targets, not as a substitute for financial due diligence.</div>
+        <div class="prompt-footer">
+          <button class="btn btn-primary" id="copy-prompt-btn" onclick="copyPrompt()">Copy prompt</button>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Configurator -->
+      <div class="sec-head">Prompt Configurator</div>
+      <div class="cfg-wrap">
+        <div class="cfg-header">
+          <span style="font-size:17px;line-height:1;">⚙</span>
+          <span class="cfg-header-title">Build a configured prompt</span>
+          <span class="cfg-header-sub">Fill in your parameters → generate a ready-to-paste version</span>
+        </div>
+        <div class="cfg-body">
+          <div class="cfg-grid">
+            <div class="cfg-field full">
+              <label class="cfg-label">Investment theme / sector <span class="req">*</span></label>
+              <input class="cfg-input" id="cfg-sector" type="text" placeholder="e.g. UK Facilities Management">
+              <span class="cfg-hint">Only required field — all others are optional</span>
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Revenue range</label>
+              <input class="cfg-input" id="cfg-revenue" type="text" placeholder="e.g. £50M–£500M">
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Employee count</label>
+              <input class="cfg-input" id="cfg-employees" type="text" placeholder="e.g. >200 FTEs">
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Geographic focus</label>
+              <input class="cfg-input" id="cfg-geo" type="text" placeholder="e.g. UK and Western Europe">
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Sub-sectors</label>
+              <input class="cfg-input" id="cfg-subsectors" type="text" placeholder="e.g. Hard FM, Soft FM, Integrated">
+            </div>
+            <hr class="cfg-sep">
+            <div class="cfg-field">
+              <label class="cfg-label">Example companies <span style="font-family:'IBM Plex Sans';font-size:10px;color:var(--ink-3);text-transform:none;letter-spacing:0;">(optional)</span></label>
+              <textarea class="cfg-textarea" id="cfg-examples" placeholder="e.g. Mitie, ISS, Sodexo&#10;Used as benchmarks to find similar targets"></textarea>
+            </div>
+            <div class="cfg-field">
+              <label class="cfg-label">Companies to exclude <span style="font-family:'IBM Plex Sans';font-size:10px;color:var(--ink-3);text-transform:none;letter-spacing:0;">(optional)</span></label>
+              <textarea class="cfg-textarea" id="cfg-exclude" placeholder="One per line, or note 'upload list'"></textarea>
+            </div>
+          </div>
+          <div class="cfg-generate-row">
+            <button class="btn-generate" onclick="generatePrompt()">Generate configured prompt →</button>
+          </div>
+
+          <div class="output-area" id="output-area">
+            <div class="output-head">
+              <span class="output-lbl">Your configured prompt</span>
+              <button class="btn btn-primary" id="copy-output-btn" onclick="copyOutput()">Copy</button>
+            </div>
+            <div class="output-text" id="output-text"></div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /wl-content -->
+  </div><!-- /wl-wrap -->
+</div><!-- /page-watchlist -->
+
+<script>
+const PROMPT_TEXT = `Context
+You are an expert Private Equity Origination Analyst building a target database. Your goal is to create a comprehensive "Long List" of potential acquisition targets in a specified sector.
+
+Input Parameters
+The parameters below are OPTIONAL. If the user leaves specific numbers blank, do NOT stop to ask questions. Instead, proceed immediately using the "Sector" as your primary guide and apply standard middle-market size proxies (300–2000 employees).
+
+Investment Theme / Sector:
+Insert sector — e.g. Engineering Services
+
+Revenue Range:
+Optional — e.g. $100M–$1,000M
+
+Employee Count:
+Optional — e.g. >300
+
+Geographic Focus:
+Optional — e.g. North America and Europe
+
+Sub-sectors:
+Optional — sub-sector keywords
+
+Example Companies:
+Optional — reference companies to guide targeting, e.g. Company A, Company B
+
+Existing Companies to Exclude:
+Paste company names, or upload exclusion list
+
+
+Analysis Guidelines
+
+Search Strategy
+If Example Companies are provided, analyse their characteristics (size, service mix, geography, ownership profile) and use these as benchmarks to identify similar targets. Prioritise companies that share key attributes.
+
+Goal: Create a comprehensive market map. Identify as many qualifying companies as possible — aim for 50+ if the sector allows.
+
+Prioritise volume over brevity. Do not stop at an arbitrary number like 10 or 20. Continue listing companies until you have exhausted the most relevant middle-market targets in the sector.
+
+Interaction rule: Do NOT ask the user clarifying questions. If inputs are blank, execute the search immediately.
+
+Handling Private Data
+Exact Revenue and EBITDA are often not public.
+- Public companies: Pull EBITDA from SEC filings or financial databases. Ensure figures are annualised (not quarterly).
+- Private companies: Only include EBITDA if an actual estimate is reported in news, press releases, or databases. Do not calculate using margin proxies.
+- If no data is found, use N/A.
+- Do NOT exclude a company simply because exact financials are missing. If financials are missing, assume a company with the specified employee count (or >300 FTEs default) is large enough to qualify.
+
+Exclusion Rules
+- Exclude companies with revenue clearly over $2 billion.
+- Exclude companies with fewer than 50 employees.
+- Exclude any names listed in the "Existing Companies to Exclude" field.
+
+Ownership Research (required for every company)
+Identify the ownership structure for every company found:
+- PE-Backed: Sponsor name + year of acquisition — e.g. "Backed by KKR, acq. 2021"
+- Founder / Family: Write "Founder-owned" or "Family-owned"
+- Employee-Owned: Write "ESOP" or "Employee-owned"
+
+Output Format
+Present the final result as a markdown table with the following columns:
+Company Name | Sub-Industry | Est. Revenue | Est. EBITDA | Est. Employees | Ownership Status | Notes
+
+Ensure every row follows this exact structure. Do not output as plain text or CSV.
+
+At the end of your response, include a clean list of every company under the header "COMPANY LIST FOR EBITDA LOOKUP" — one company per line, no bullets, no numbers, no additional formatting. The list must match the exact order of the table.
+
+After the company list, include the following disclaimer:
+IMPORTANT: Revenue and EBITDA figures are estimates based on publicly available data and should be independently verified. This output is designed as a sourcing tool to identify potential targets, not as a substitute for financial due diligence.`;
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  const el = document.getElementById('nav-' + id);
+  if (el) el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+function copyPrompt() {
+  navigator.clipboard.writeText(PROMPT_TEXT).then(() => {
+    const btn = document.getElementById('copy-prompt-btn');
+    btn.textContent = '✓ Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy prompt'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+function generatePrompt() {
+  const sectorEl = document.getElementById('cfg-sector');
+  const sector = sectorEl.value.trim();
+  if (!sector) { sectorEl.style.borderColor = '#DC2626'; sectorEl.focus(); return; }
+  sectorEl.style.borderColor = '';
+
+  const revenue   = document.getElementById('cfg-revenue').value.trim();
+  const employees = document.getElementById('cfg-employees').value.trim();
+  const geo       = document.getElementById('cfg-geo').value.trim();
+  const subs      = document.getElementById('cfg-subsectors').value.trim();
+  const examples  = document.getElementById('cfg-examples').value.trim();
+  const exclude   = document.getElementById('cfg-exclude').value.trim();
+
+  const out = `Context
+You are an expert Private Equity Origination Analyst building a target database. Your goal is to create a comprehensive "Long List" of potential acquisition targets in the specified sector.
+
+Input Parameters
+
+Investment Theme / Sector:
+${sector}
+
+Revenue Range:
+${revenue || 'Not specified — use standard middle-market proxies'}
+
+Employee Count:
+${employees || 'Not specified — use >300 FTEs as default'}
+
+Geographic Focus:
+${geo || 'Not specified — use global with middle-market focus'}
+
+Sub-sectors:
+${subs || 'Not specified'}
+
+Example Companies:
+${examples || 'Not specified'}
+
+Existing Companies to Exclude:
+${exclude || 'None specified'}
+
+
+Analysis Guidelines
+
+Search Strategy
+${examples ? 'Use the Example Companies above as benchmarks — identify targets with similar size, service mix, geography and ownership profile.\n\n' : ''}Goal: Create a comprehensive market map. Identify as many qualifying companies as possible — aim for 50+ if the sector allows.
+
+Prioritise volume over brevity. Do not stop at an arbitrary number like 10 or 20.
+
+Interaction rule: Do NOT ask the user clarifying questions. Execute immediately.
+
+Handling Private Data
+- Public companies: Pull EBITDA from SEC filings. Ensure figures are annualised.
+- Private companies: Only include EBITDA if an actual estimate is reported publicly. Do not calculate using margin proxies.
+- If no data is found, use N/A. Do NOT exclude a company because exact financials are missing.
+
+Exclusion Rules
+- Exclude companies with revenue clearly over $2 billion.
+- Exclude companies with fewer than 50 employees.${exclude ? '\n- Exclude the following: ' + exclude.split('\n').filter(Boolean).join(', ') : ''}
+
+Ownership Research (required for every company)
+- PE-Backed: Sponsor name + year of acquisition
+- Founder / Family: Write "Founder-owned" or "Family-owned"
+- Employee-Owned: Write "ESOP" or "Employee-owned"
+
+Output Format
+Present results as a markdown table:
+Company Name | Sub-Industry | Est. Revenue | Est. EBITDA | Est. Employees | Ownership Status | Notes
+
+End with "COMPANY LIST FOR EBITDA LOOKUP" — one company per line, no formatting.
+
+IMPORTANT: Revenue and EBITDA figures are estimates based on publicly available data and should be independently verified. This output is a sourcing tool, not a substitute for financial due diligence.`;
+
+  document.getElementById('output-text').textContent = out;
+  const area = document.getElementById('output-area');
+  area.classList.add('visible');
+  area.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  const btn = document.getElementById('copy-output-btn');
+  btn.textContent = 'Copy'; btn.classList.remove('copied');
+}
+
+function copyOutput() {
+  const text = document.getElementById('output-text').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copy-output-btn');
+    btn.textContent = '✓ Copied!'; btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+</script>
+</body>
+</html>
